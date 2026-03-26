@@ -355,11 +355,11 @@
       <div class="card-title">Input</div>
       <div class="controls">
         <div style="margin-bottom:16px;">
-          <label for="textInput">Text to render</label>
+          <label for="textInput"><strong>Step 1:</strong> Enter text to render</label>
           <input type="text" id="textInput" value="HELLO" placeholder="A-Z, 0-9, space" maxlength="9" autocomplete="off" spellcheck="false" />
         </div>
         <div style="margin-bottom:16px;">
-          <label for="remoteInput">Target GitHub Repo URL (Optional for automation)</label>
+          <label for="remoteInput"><strong>Step 2:</strong> Target GitHub Repo URL (Optional for automation)</label>
           <input type="text" id="remoteInput" placeholder="https://github.com/YOU/REPO.git" autocomplete="off" spellcheck="false" />
         </div>
         <div class="control-row">
@@ -402,7 +402,7 @@
 
     <!-- Actions Card -->
     <div class="card">
-      <div class="card-title">Export</div>
+      <div class="card-title"><strong>Step 3:</strong> Export or Copy</div>
       <div class="actions">
         <button class="btn btn-primary" id="downloadShBtn" title="Download a bash script (.sh) for Linux/Mac/Git Bash">
           ⬇ Download .sh
@@ -416,7 +416,27 @@
       </div>
     </div>
 
+    <!-- Instructions Card -->
+    <div class="card">
+      <div class="card-title">How to Use (Clarified)</div>
+      <div class="instructions">
+        <strong>Method 1 — Automated CLI (Node.js):</strong><br/>
+        1. <code>npm install</code> (one-time setup)<br/>
+        2. <code>node index.js --text "HI" --year 2025 --remote https://github.com/YOU/REPO.git</code><br/>
+        <em>(This automatically initializes, commits, and pushes to GitHub!)</em><br/><br/>
+        
+        <strong>Method 2 — Windows Automation (.bat):</strong><br/>
+        1. Enter your text and GitHub Repo URL above (Steps 1 & 2).<br/>
+        2. Click <strong>"Download .bat"</strong> and move it to a new empty folder.<br/>
+        3. Double-click the <code>.bat</code> file — and you're done! 🎉<br/><br/>
+        
+        <strong>Method 3 — Manual Script (.sh):</strong><br/>
+        1. Click <strong>"Download .sh"</strong> and run it in your terminal:<br/>
+        2. <code>bash git-matrix.sh</code>
+      </div>
+    </div>
 
+  </main>
   <footer>
     GitHub Contribution Graph Text Generator &middot; Pixel art with git commits
   </footer>
