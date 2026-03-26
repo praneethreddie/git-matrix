@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GitHub Contribution Graph Text Generator</title>
+  <meta name="description" content="Convert text into GitHub contribution graph pixel art. Preview and download a commit script." />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ───── Reset & Variables ───── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0d1117;
+      --bg-secondary: #161b22;
+      --bg-tertiary: #1c2128;
+      --bg-card: #21262d;
+      --border: #30363d;
+      --border-accent: #388bfd44;
+      --text-primary: #e6edf3;
+      --text-secondary: #8b949e;
+      --text-muted: #484f58;
+      --green-0: #161b22;
+      --green-1: #0e4429;
+      --green-2: #006d32;
+      --green-3: #26a641;
+      --green-4: #39d353;
+      --accent: #58a6ff;
+      --accent-glow: #58a6ff33;
+      --danger: #f85149;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+      --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    /* ───── Background Glow ───── */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 600px;
+      background: radial-gradient(ellipse, var(--green-2) 0%, transparent 70%);
+      opacity: 0.08;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ───── Header ───── */
+    header {
+      text-align: center;
+      padding: 48px 24px 32px;
+      position: relative;
+      z-index: 1;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--green-4), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      color: var(--text-secondary);
+      margin-top: 8px;
+      font-size: 0.95rem;
+      font-weight: 300;
+    }
+
+    /* ───── Main Container ───── */
+    main {
+      width: 100%;
+      max-width: 900px;
+      padding: 0 24px 64px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ───── Card ───── */
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+      transition: border-color var(--transition);
+    }
+
+    .card:hover {
+      border-color: var(--border-accent);
+    }
+
+    .card-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green-3);
+      box-shadow: 0 0 8px var(--green-3);
+    }
+
+    /* ───── Input Controls ───── */
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .control-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 640px) {
+      .control-row { grid-template-columns: 1fr; }
+    }
+
+    label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    /* ───── Grid Preview ───── */
+    .grid-wrapper {
+      overflow-x: auto;
+      padding: 8px 0;
+    }
+
+    .grid-container {
+      display: inline-grid;
+      gap: 3px;
+      padding: 16px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      min-height: 120px;
+    }
+
+    .grid-cell {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      transition: background var(--transition), transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .grid-cell.empty  { background: var(--green-0); }
+    .grid-cell.lv1    { background: var(--green-1); }
+    .grid-cell.lv2    { background: var(--green-2); }
+    .grid-cell.lv3    { background: var(--green-3); box-shadow: 0 0 4px var(--green-3); }
+    .grid-cell.lv4    { background: var(--green-4); box-shadow: 0 0 6px var(--green-4); }
+
+    .grid-cell.filled:hover {
+      transform: scale(1.3);
+      box-shadow: 0 0 10px var(--green-4);
+    }
+
+    .empty-state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 120px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-style: italic;
+    }
+
+    /* ───── Stats ───── */
+    .stats {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .stat {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .stat strong {
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ───── Buttons ───── */
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--green-2), var(--green-3));
+      color: #fff;
+      border-color: var(--green-3);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, var(--green-3), var(--green-4));
+      box-shadow: 0 0 20px rgba(57,211,83,0.3);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-card);
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* ───── Instructions ───── */
+    .instructions {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      line-height: 1.8;
+      color: var(--text-secondary);
+      background: var(--bg-tertiary);
+      padding: 16px 20px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    .instructions code {
+      color: var(--green-4);
+      padding: 2px 6px;
+      background: rgba(57,211,83,0.1);
+      border-radius: 4px;
+    }
+
+    /* ───── Legend ───── */
+    .legend {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 16px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .legend-cell {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+    }
+
+    /* ───── Animations ───── */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card { animation: fadeInUp 0.5s ease both; }
+    .card:nth-child(2) { animation-delay: 0.08s; }
+    .card:nth-child(3) { animation-delay: 0.16s; }
+    .card:nth-child(4) { animation-delay: 0.24s; }
+
+    /* ───── Footer ───── */
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>GitHub Graph Text Generator</h1>
+    <p>Turn any text into contribution graph pixel art</p>
+  </header>
+
+  <main>
+    <!-- Input Card -->
+    <div class="card">
+      <div class="card-title">Input</div>
+      <div class="controls">
+        <div>
+          <label for="textInput">Text to render</label>
+          <input type="text" id="textInput" value="HELLO" placeholder="A-Z, 0-9, space" maxlength="9" autocomplete="off" spellcheck="false" />
+        </div>
+        <div class="control-row">
+          <div>
+            <label for="yearInput">Target Year</label>
+            <input type="number" id="yearInput" placeholder="e.g. 2025" min="2008" max="2026" />
+          </div>
+          <div>
+            <label for="intensityInput">Intensity (1–4)</label>
+            <input type="number" id="intensityInput" value="1" min="1" max="4" />
+          </div>
+          <div>
+            <label for="offsetInput">Week Offset</label>
+            <input type="number" id="offsetInput" value="0" min="0" max="40" />
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <div class="legend">
+              Less
+              <div class="legend-cell" style="background:var(--green-0)"></div>
+              <div class="legend-cell" style="background:var(--green-1)"></div>
+              <div class="legend-cell" style="background:var(--green-2)"></div>
+              <div class="legend-cell" style="background:var(--green-3)"></div>
+              <div class="legend-cell" style="background:var(--green-4)"></div>
+              More
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Card -->
+    <div class="card">
+      <div class="card-title">Live Preview</div>
+      <div class="grid-wrapper">
+        <div id="gridContainer" class="grid-container"></div>
+      </div>
+      <div id="stats" class="stats"></div>
+    </div>
+
+    <!-- Actions Card -->
+    <div class="card">
+      <div class="card-title">Export</div>
+      <div class="actions">
+        <button class="btn btn-primary" id="downloadBtn" title="Download a bash script with all git commit commands">
+          ⬇ Download Script (.sh)
+        </button>
+        <button class="btn btn-secondary" id="copyBtn" title="Copy the CLI command to clipboard">
+          📋 Copy CLI Command
+        </button>
+      </div>
+    </div>
+
+    <!-- Instructions Card -->
+    <div class="card">
+      <div class="card-title">How to Use</div>
+      <div class="instructions">
+        <strong>Option A — CLI (Node.js):</strong><br/>
+        <code>npm install</code> → <code>node index.js --text "HELLO" --preview</code><br/>
+        Then: <code>node index.js --text "HELLO" --repo ./my-repo</code><br/><br/>
+        <strong>Option B — Downloaded Script:</strong><br/>
+        1. Create a new empty GitHub repo<br/>
+        2. <code>git clone</code> into a folder, <code>cd</code> into it<br/>
+        3. Run the downloaded <code>.sh</code> script<br/>
+        4. <code>git push</code> — wait a few minutes for graph to update
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    GitHub Contribution Graph Text Generator &middot; Pixel art with git commits
+  </footer>
+
+  <!-- ───── Script ───── -->
+  <script>
+    // ── Embedded 5×7 Font ──
+    const FONTS={A:[[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1]],B:[[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0]],C:[[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,1],[0,1,1,1,0]],D:[[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0]],E:[[1,1,1,1,1],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,0],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,1]],F:[[1,1,1,1,1],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0]],G:[[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,0],[1,0,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],H:[[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1]],I:[[1,1,1,1,1],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[1,1,1,1,1]],J:[[0,0,1,1,1],[0,0,0,1,0],[0,0,0,1,0],[0,0,0,1,0],[0,0,0,1,0],[1,0,0,1,0],[0,1,1,0,0]],K:[[1,0,0,0,1],[1,0,0,1,0],[1,0,1,0,0],[1,1,0,0,0],[1,0,1,0,0],[1,0,0,1,0],[1,0,0,0,1]],L:[[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,1]],M:[[1,0,0,0,1],[1,1,0,1,1],[1,0,1,0,1],[1,0,1,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1]],N:[[1,0,0,0,1],[1,1,0,0,1],[1,0,1,0,1],[1,0,0,1,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1]],O:[[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],P:[[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0]],Q:[[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,1,0,1],[1,0,0,1,0],[0,1,1,0,1]],R:[[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],[1,0,1,0,0],[1,0,0,1,0],[1,0,0,0,1]],S:[[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,0],[0,1,1,1,0],[0,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],T:[[1,1,1,1,1],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0]],U:[[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],V:[[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,0,1,0],[0,1,0,1,0],[0,0,1,0,0]],W:[[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,1,0,1],[1,0,1,0,1],[1,1,0,1,1],[1,0,0,0,1]],X:[[1,0,0,0,1],[1,0,0,0,1],[0,1,0,1,0],[0,0,1,0,0],[0,1,0,1,0],[1,0,0,0,1],[1,0,0,0,1]],Y:[[1,0,0,0,1],[1,0,0,0,1],[0,1,0,1,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0]],Z:[[1,1,1,1,1],[0,0,0,0,1],[0,0,0,1,0],[0,0,1,0,0],[0,1,0,0,0],[1,0,0,0,0],[1,1,1,1,1]],'0':[[0,1,1,1,0],[1,0,0,0,1],[1,0,0,1,1],[1,0,1,0,1],[1,1,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],'1':[[0,0,1,0,0],[0,1,1,0,0],[1,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[1,1,1,1,1]],'2':[[0,1,1,1,0],[1,0,0,0,1],[0,0,0,0,1],[0,0,1,1,0],[0,1,0,0,0],[1,0,0,0,0],[1,1,1,1,1]],'3':[[0,1,1,1,0],[1,0,0,0,1],[0,0,0,0,1],[0,0,1,1,0],[0,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],'4':[[0,0,0,1,0],[0,0,1,1,0],[0,1,0,1,0],[1,0,0,1,0],[1,1,1,1,1],[0,0,0,1,0],[0,0,0,1,0]],'5':[[1,1,1,1,1],[1,0,0,0,0],[1,1,1,1,0],[0,0,0,0,1],[0,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],'6':[[0,1,1,1,0],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],'7':[[1,1,1,1,1],[0,0,0,0,1],[0,0,0,1,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0]],'8':[[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],'9':[[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,1],[0,0,0,0,1],[0,0,0,0,1],[0,1,1,1,0]],' ':[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]],'.':[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,1,1,0,0],[0,1,1,0,0]],'!':[[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,0,0,0],[0,0,1,0,0]],'?':[[0,1,1,1,0],[1,0,0,0,1],[0,0,0,0,1],[0,0,1,1,0],[0,0,1,0,0],[0,0,0,0,0],[0,0,1,0,0]],'-':[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[1,1,1,1,1],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]};
+
+    // ── State ──
+    const textInput      = document.getElementById('textInput');
+    const yearInput      = document.getElementById('yearInput');
+    const intensityInput = document.getElementById('intensityInput');
+    const offsetInput    = document.getElementById('offsetInput');
+    const gridContainer  = document.getElementById('gridContainer');
+    const statsEl        = document.getElementById('stats');
+    const downloadBtn    = document.getElementById('downloadBtn');
+    const copyBtn        = document.getElementById('copyBtn');
+
+    let currentGrid = null;
+    let currentDates = [];
+
+    // ── Text → Grid ──
+    function textToGrid(text) {
+      const upper = (text || '').toUpperCase();
+      if (!upper) return null;
+      const matrices = [];
+      for (const ch of upper) { matrices.push(FONTS[ch] || FONTS[' ']); }
+      const totalW = matrices.reduce((s, m) => s + m[0].length, 0) + (matrices.length - 1);
+      const grid = Array.from({length:7}, () => Array(totalW).fill(0));
+      let off = 0;
+      for (const mat of matrices) {
+        const w = mat[0].length;
+        for (let r = 0; r < 7; r++) for (let c = 0; c < w; c++) grid[r][off+c] = mat[r][c];
+        off += w + 1;
+      }
+      return grid;
+    }
+
+    // ── Grid → Dates ──
+    function gridToDates(grid, intensity, offset, year) {
+      const today = new Date();
+      const w = grid[0].length;
+      let refSunday, maxWeeks;
+
+      if (year) {
+        // Year mode: map to Jan 1 → Dec 31 of that year
+        const jan1 = new Date(year, 0, 1);
+        const dec31 = new Date(year, 11, 31);
+        const graphStart = new Date(jan1); graphStart.setDate(jan1.getDate() - jan1.getDay());
+        const graphEnd = new Date(dec31); graphEnd.setDate(dec31.getDate() + (6 - dec31.getDay()));
+        maxWeeks = Math.ceil((graphEnd - graphStart) / (7*86400000)) + 1;
+        refSunday = new Date(graphEnd); refSunday.setDate(graphEnd.getDate() - graphEnd.getDay());
+      } else {
+        // Rolling mode: last 52 weeks
+        refSunday = new Date(today); refSunday.setDate(today.getDate() - today.getDay());
+        maxWeeks = 52;
+      }
+      refSunday.setHours(12,0,0,0);
+
+      const rightmost = maxWeeks - 1 - offset;
+      const dates = [];
+      for (let col = 0; col < w; col++) {
+        const weeksAgo = rightmost - col;
+        const weekSun = new Date(refSunday); weekSun.setDate(refSunday.getDate() - weeksAgo * 7);
+        for (let row = 0; row < 7; row++) {
+          if (grid[row][col]) {
+            const d = new Date(weekSun); d.setDate(weekSun.getDate() + row);
+            if (d > today) continue;
+            if (year && d.getFullYear() !== year) continue;
+            const ds = d.toISOString().slice(0,10) + 'T12:00:00';
+            dates.push({date: ds, commits: Math.max(1, Math.min(4, intensity))});
+          }
+        }
+      }
+      return dates;
+    }
+
+    // ── Render Grid ──
+    function render() {
+      const text = textInput.value;
+      const year = yearInput.value ? parseInt(yearInput.value) : null;
+      const intensity = parseInt(intensityInput.value) || 1;
+      const offset = parseInt(offsetInput.value) || 0;
+
+      const grid = textToGrid(text);
+      if (!grid) {
+        gridContainer.innerHTML = '<div class="empty-state">Type something above...</div>';
+        gridContainer.style.gridTemplateColumns = '';
+        statsEl.innerHTML = '';
+        currentGrid = null;
+        currentDates = [];
+        return;
+      }
+
+      currentGrid = grid;
+      const w = grid[0].length;
+
+      // Intensity class map
+      const lvClasses = ['lv1','lv2','lv3','lv4'];
+      const lvClass = lvClasses[Math.min(intensity, 4) - 1];
+
+      gridContainer.style.gridTemplateColumns = `repeat(${w}, 14px)`;
+      gridContainer.style.gridTemplateRows = 'repeat(7, 14px)';
+
+      let html = '';
+      for (let row = 0; row < 7; row++) {
+        for (let col = 0; col < w; col++) {
+          const filled = grid[row][col];
+          html += `<div class="grid-cell ${filled ? lvClass + ' filled' : 'empty'}"></div>`;
+        }
+      }
+      gridContainer.innerHTML = html;
+
+      // Animate cells
+      const cells = gridContainer.querySelectorAll('.grid-cell.filled');
+      cells.forEach((cell, i) => {
+        cell.style.opacity = '0';
+        cell.style.transform = 'scale(0)';
+        setTimeout(() => {
+          cell.style.opacity = '1';
+          cell.style.transform = 'scale(1)';
+        }, 10 + i * 6);
+      });
+
+      // Dates & stats
+      currentDates = gridToDates(grid, intensity, offset, year);
+      const total = currentDates.reduce((s,d) => s + d.commits, 0);
+      const pixels = grid.flat().filter(v => v).length;
+      const yearLabel = year ? `Year ${year}` : 'Last 52 weeks';
+      statsEl.innerHTML = `
+        <span class="stat">Target: <strong>${yearLabel}</strong></span>
+        <span class="stat">Pixels: <strong>${pixels}</strong></span>
+        <span class="stat">Total commits: <strong>${total}</strong></span>
+        <span class="stat">Weeks: <strong>${w}</strong></span>
+        <span class="stat">Intensity: <strong>×${intensity}</strong></span>
+      `;
+    }
+
+    // ── Generate Script ──
+    function generateScriptText() {
+      if (!currentDates.length) return '';
+      const sorted = [...currentDates].sort((a,b) => a.date.localeCompare(b.date));
+      let lines = ['#!/bin/bash','# GitHub Contribution Graph Text Generator','# Auto-generated commit script','','set -e',''];
+      let n = 0;
+      for (const e of sorted) {
+        for (let i = 0; i < e.commits; i++) {
+          n++;
+          lines.push(`GIT_AUTHOR_DATE="${e.date}" GIT_COMMITTER_DATE="${e.date}" git commit --allow-empty -m "pixel ${n}"`);
+        }
+      }
+      lines.push('', `echo "Done! Created ${n} commits."`, '');
+      return lines.join('\n');
+    }
+
+    // ── Download ──
+    downloadBtn.addEventListener('click', () => {
+      const script = generateScriptText();
+      if (!script) return;
+      const blob = new Blob([script], {type:'text/x-shellscript'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `git-matrix-${textInput.value.toLowerCase().replace(/[^a-z0-9]/g,'')}.sh`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    // ── Copy CLI ──
+    copyBtn.addEventListener('click', () => {
+      const yearFlag = yearInput.value ? ` --year ${yearInput.value}` : '';
+      const cmd = `node index.js --text "${textInput.value}" --intensity ${intensityInput.value} --offset ${offsetInput.value}${yearFlag}`;
+      navigator.clipboard.writeText(cmd).then(() => {
+        copyBtn.textContent = '✓ Copied!';
+        setTimeout(() => { copyBtn.textContent = '📋 Copy CLI Command'; }, 2000);
+      });
+    });
+
+    // ── Events ──
+    textInput.addEventListener('input', render);
+    yearInput.addEventListener('input', render);
+    intensityInput.addEventListener('input', render);
+    offsetInput.addEventListener('input', render);
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>

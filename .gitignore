@@ -1,0 +1,7 @@
+node_modules
+npm-debug.log
+.DS_Store
+.env
+temp_repo
+test_script.sh
+test_2025.sh
