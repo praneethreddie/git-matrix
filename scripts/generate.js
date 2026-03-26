@@ -92,16 +92,30 @@ export async function generateCommits(dates, repoPath, opts = {}) {
  * Generate a Windows Batch script (.bat) for manual use.
  *
  * @param {{ date: string, commits: number }[]} dates
+ * @param {object} opts
+ * @param {string} [opts.remote] - Optional repository URL to push to
  * @returns {string}
  */
-export function generateBatScript(dates) {
+export function generateBatScript(dates, opts = {}) {
   const sorted = [...dates].sort((a, b) => a.date.localeCompare(b.date));
+  const remote = opts.remote;
+
   const lines = [
     '@echo off',
+    'SETLOCAL EnableDelayedExpansion',
     'REM GitHub Contribution Graph Text Generator',
     'REM Automatically created commit script',
     '',
-    'setlocal enabledelayedexpansion',
+    'set REPO_URL=' + (remote || ''),
+    'if "%REPO_URL%"=="" (',
+    '  set /p REPO_URL="Enter your GitHub Repo URL: "',
+    ')',
+    '',
+    'if NOT "%REPO_URL%"=="" (',
+    '  git init',
+    '  git remote add origin %REPO_URL% >nul 2>&1 || git remote set-url origin %REPO_URL%',
+    '  git branch -M main',
+    ')',
     '',
   ];
 
@@ -109,14 +123,22 @@ export function generateBatScript(dates) {
   for (const entry of sorted) {
     for (let i = 0; i < entry.commits; i++) {
       count++;
-      // On Windows cmd, we use SET to set env vars for the command
       lines.push(
         `set GIT_AUTHOR_DATE=${entry.date}&& set GIT_COMMITTER_DATE=${entry.date}&& git commit --allow-empty -m "pixel ${count}"`
       );
     }
   }
 
-  lines.push('', 'echo Done! Created ' + count + ' commits.', 'pause');
+  lines.push(
+    '',
+    'if NOT "%REPO_URL%"=="" (',
+    '  echo Pushing to GitHub...',
+    '  git push -u origin main --force',
+    ')',
+    '',
+    'echo Done! Created ' + count + ' commits.',
+    'pause'
+  );
   return lines.join('\r\n');
 }
 

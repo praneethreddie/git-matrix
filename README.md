@@ -33,7 +33,7 @@ node index.js --text "HI" --export commits.sh
 ## Features
 
 - **Automated Push** — One command to init, commit, and push via `--remote`
-- **Windows .bat Support** — Download ready-to-use batch scripts for CMD
+- **Interactive .bat Support** — Windows scripts will prompt for a Repo URL if not provided
 - **5×7 Dot-Matrix Font** — A–Z, 0–9, space, and punctuation
 - **Console Preview** — See your text before committing
 - **Intensity Control** — 1 (light green) to 4 (dark green)

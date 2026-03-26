@@ -600,12 +600,25 @@
     function generateBatText() {
       if (!currentDates.length) return '';
       const sorted = [...currentDates].sort((a,b) => a.date.localeCompare(b.date));
-      let lines = ['@echo off','REM GitHub Contribution Graph Text Generator','','setlocal enabledelayedexpansion',''];
-
       const remote = remoteInput.value.trim();
-      if (remote) {
-        lines.push('git init', `git remote add origin ${remote} >nul 2>&1 || git remote set-url origin ${remote}`, '');
-      }
+
+      let lines = [
+        '@echo off',
+        'SETLOCAL EnableDelayedExpansion',
+        'REM GitHub Contribution Graph Text Generator',
+        '',
+        'set REPO_URL=' + (remote || ''),
+        'if "%REPO_URL%"=="" (',
+        '  set /p REPO_URL="Enter your GitHub Repo URL: "',
+        ')',
+        '',
+        'if NOT "%REPO_URL%"=="" (',
+        '  git init',
+        '  git remote add origin %REPO_URL% >nul 2>&1 || git remote set-url origin %REPO_URL%',
+        '  git branch -M main',
+        ')',
+        '',
+      ];
 
       let n = 0;
       for (const e of sorted) {
@@ -614,8 +627,17 @@
           lines.push(`set GIT_AUTHOR_DATE=${e.date}&& set GIT_COMMITTER_DATE=${e.date}&& git commit --allow-empty -m "pixel ${n}"`);
         }
       }
-      if (remote) lines.push('', 'git branch -M main', 'git push -u origin main --force');
-      lines.push('', 'echo Done! Created ' + n + ' commits.', 'pause');
+
+      lines.push(
+        '',
+        'if NOT "%REPO_URL%"=="" (',
+        '  echo Pushing to GitHub...',
+        '  git push -u origin main --force',
+        ')',
+        '',
+        'echo Done! Created ' + n + ' commits.',
+        'pause'
+      );
       return lines.join('\r\n');
     }
 
