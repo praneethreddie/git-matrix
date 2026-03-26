@@ -65,7 +65,59 @@ export async function generateCommits(dates, repoPath, opts = {}) {
     }
   }
 
+  // If a remote is provided, handle pushing
+  if (opts.remote) {
+    try {
+      const remotes = await git.getRemotes();
+      if (!remotes.find((r) => r.name === 'origin')) {
+        await git.addRemote('origin', opts.remote);
+      } else {
+        // Update existing remote if different
+        const originUrl = (await git.remote(['get-url', 'origin'])).trim();
+        if (originUrl !== opts.remote) {
+          await git.remote(['set-url', 'origin', opts.remote]);
+        }
+      }
+
+      await git.push(['-u', 'origin', 'main', '--force']);
+    } catch (err) {
+      throw new Error(`Failed to push to remote: ${err.message}`);
+    }
+  }
+
   return { totalCommits: total, repoPath: absPath };
+}
+
+/**
+ * Generate a Windows Batch script (.bat) for manual use.
+ *
+ * @param {{ date: string, commits: number }[]} dates
+ * @returns {string}
+ */
+export function generateBatScript(dates) {
+  const sorted = [...dates].sort((a, b) => a.date.localeCompare(b.date));
+  const lines = [
+    '@echo off',
+    'REM GitHub Contribution Graph Text Generator',
+    'REM Automatically created commit script',
+    '',
+    'setlocal enabledelayedexpansion',
+    '',
+  ];
+
+  let count = 0;
+  for (const entry of sorted) {
+    for (let i = 0; i < entry.commits; i++) {
+      count++;
+      // On Windows cmd, we use SET to set env vars for the command
+      lines.push(
+        `set GIT_AUTHOR_DATE=${entry.date}&& set GIT_COMMITTER_DATE=${entry.date}&& git commit --allow-empty -m "pixel ${count}"`
+      );
+    }
+  }
+
+  lines.push('', 'echo Done! Created ' + count + ' commits.', 'pause');
+  return lines.join('\r\n');
 }
 
 /**

@@ -354,9 +354,13 @@
     <div class="card">
       <div class="card-title">Input</div>
       <div class="controls">
-        <div>
+        <div style="margin-bottom:16px;">
           <label for="textInput">Text to render</label>
           <input type="text" id="textInput" value="HELLO" placeholder="A-Z, 0-9, space" maxlength="9" autocomplete="off" spellcheck="false" />
+        </div>
+        <div style="margin-bottom:16px;">
+          <label for="remoteInput">Target GitHub Repo URL (Optional for automation)</label>
+          <input type="text" id="remoteInput" placeholder="https://github.com/YOU/REPO.git" autocomplete="off" spellcheck="false" />
         </div>
         <div class="control-row">
           <div>
@@ -400,8 +404,11 @@
     <div class="card">
       <div class="card-title">Export</div>
       <div class="actions">
-        <button class="btn btn-primary" id="downloadBtn" title="Download a bash script with all git commit commands">
-          ⬇ Download Script (.sh)
+        <button class="btn btn-primary" id="downloadShBtn" title="Download a bash script (.sh) for Linux/Mac/Git Bash">
+          ⬇ Download .sh
+        </button>
+        <button class="btn btn-primary" id="downloadBatBtn" title="Download a Windows Batch script (.bat) for Command Prompt">
+          ⬇ Download .bat
         </button>
         <button class="btn btn-secondary" id="copyBtn" title="Copy the CLI command to clipboard">
           📋 Copy CLI Command
@@ -436,12 +443,14 @@
 
     // ── State ──
     const textInput      = document.getElementById('textInput');
+    const remoteInput    = document.getElementById('remoteInput');
     const yearInput      = document.getElementById('yearInput');
     const intensityInput = document.getElementById('intensityInput');
     const offsetInput    = document.getElementById('offsetInput');
     const gridContainer  = document.getElementById('gridContainer');
     const statsEl        = document.getElementById('stats');
-    const downloadBtn    = document.getElementById('downloadBtn');
+    const downloadShBtn  = document.getElementById('downloadShBtn');
+    const downloadBatBtn = document.getElementById('downloadBatBtn');
     const copyBtn        = document.getElementById('copyBtn');
 
     let currentGrid = null;
@@ -564,11 +573,17 @@
       `;
     }
 
-    // ── Generate Script ──
-    function generateScriptText() {
+    // ── Generate Script (SH) ──
+    function generateShText() {
       if (!currentDates.length) return '';
       const sorted = [...currentDates].sort((a,b) => a.date.localeCompare(b.date));
       let lines = ['#!/bin/bash','# GitHub Contribution Graph Text Generator','# Auto-generated commit script','','set -e',''];
+      
+      const remote = remoteInput.value.trim();
+      if (remote) {
+        lines.push('git init', `git remote add origin ${remote} || git remote set-url origin ${remote}`, '');
+      }
+
       let n = 0;
       for (const e of sorted) {
         for (let i = 0; i < e.commits; i++) {
@@ -576,18 +591,54 @@
           lines.push(`GIT_AUTHOR_DATE="${e.date}" GIT_COMMITTER_DATE="${e.date}" git commit --allow-empty -m "pixel ${n}"`);
         }
       }
+      if (remote) lines.push('', 'git branch -M main', 'git push -u origin main --force');
       lines.push('', `echo "Done! Created ${n} commits."`, '');
       return lines.join('\n');
     }
 
-    // ── Download ──
-    downloadBtn.addEventListener('click', () => {
-      const script = generateScriptText();
+    // ── Generate Script (BAT) ──
+    function generateBatText() {
+      if (!currentDates.length) return '';
+      const sorted = [...currentDates].sort((a,b) => a.date.localeCompare(b.date));
+      let lines = ['@echo off','REM GitHub Contribution Graph Text Generator','','setlocal enabledelayedexpansion',''];
+
+      const remote = remoteInput.value.trim();
+      if (remote) {
+        lines.push('git init', `git remote add origin ${remote} >nul 2>&1 || git remote set-url origin ${remote}`, '');
+      }
+
+      let n = 0;
+      for (const e of sorted) {
+        for (let i = 0; i < e.commits; i++) {
+          n++;
+          lines.push(`set GIT_AUTHOR_DATE=${e.date}&& set GIT_COMMITTER_DATE=${e.date}&& git commit --allow-empty -m "pixel ${n}"`);
+        }
+      }
+      if (remote) lines.push('', 'git branch -M main', 'git push -u origin main --force');
+      lines.push('', 'echo Done! Created ' + n + ' commits.', 'pause');
+      return lines.join('\r\n');
+    }
+
+    // ── Download SH ──
+    downloadShBtn.addEventListener('click', () => {
+      const script = generateShText();
       if (!script) return;
       const blob = new Blob([script], {type:'text/x-shellscript'});
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `git-matrix-${textInput.value.toLowerCase().replace(/[^a-z0-9]/g,'')}.sh`;
+      a.download = `git-matrix.sh`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    // ── Download BAT ──
+    downloadBatBtn.addEventListener('click', () => {
+      const script = generateBatText();
+      if (!script) return;
+      const blob = new Blob([script], {type:'text/plain'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `git-matrix.bat`;
       a.click();
       URL.revokeObjectURL(a.href);
     });
@@ -595,7 +646,8 @@
     // ── Copy CLI ──
     copyBtn.addEventListener('click', () => {
       const yearFlag = yearInput.value ? ` --year ${yearInput.value}` : '';
-      const cmd = `node index.js --text "${textInput.value}" --intensity ${intensityInput.value} --offset ${offsetInput.value}${yearFlag}`;
+      const remoteFlag = remoteInput.value ? ` --remote ${remoteInput.value}` : '';
+      const cmd = `node index.js --text "${textInput.value}" --intensity ${intensityInput.value} --offset ${offsetInput.value}${yearFlag}${remoteFlag}`;
       navigator.clipboard.writeText(cmd).then(() => {
         copyBtn.textContent = '✓ Copied!';
         setTimeout(() => { copyBtn.textContent = '📋 Copy CLI Command'; }, 2000);
@@ -604,6 +656,7 @@
 
     // ── Events ──
     textInput.addEventListener('input', render);
+    remoteInput.addEventListener('input', render);
     yearInput.addEventListener('input', render);
     intensityInput.addEventListener('input', render);
     offsetInput.addEventListener('input', render);

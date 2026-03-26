@@ -12,6 +12,7 @@
  *   node index.js --text "HI" --intensity 3        # darker green
  *   node index.js --text "HI" --offset 2           # shift 2 weeks right
  *   node index.js --text "HI" --year 2024          # target year 2024
+ *   node index.js --text "HI" --remote https://github.com/YOU/REPO.git # auto-push
  *   node index.js --text "HI" --repo ./my-repo     # target another repo
  *   node index.js --text "HI" --export script.sh   # export shell script
  */
@@ -38,6 +39,7 @@ program
   .option('-i, --intensity <number>', 'Commits per pixel: 1=light, 4=dark green', '1')
   .option('-o, --offset <number>', 'Shift text by N weeks (0 = rightmost)', '0')
   .option('-y, --year <number>', 'Target year (e.g. 2024). Omit for last 52 weeks.')
+  .option('-v, --remote <url>', 'Automatic: initialize, commit, and push to this GitHub URL')
   .option('-r, --repo <path>', 'Target git repository path', '.')
   .option('-e, --export <file>', 'Export a shell script instead of committing')
   .parse(process.argv);
@@ -52,6 +54,7 @@ async function main() {
   const intensity = parseInt(opts.intensity, 10);
   const offset    = parseInt(opts.offset, 10);
   const year      = opts.year ? parseInt(opts.year, 10) : undefined;
+  const remote    = opts.remote;
   const repoPath  = resolve(opts.repo);
   const exportFile = opts.export;
 
@@ -130,6 +133,7 @@ async function main() {
     const startTime = Date.now();
 
     await generateCommits(dates, repoPath, {
+      remote,
       onProgress: (current, total) => {
         const pct = Math.round((current / total) * 100);
         const bar = '█'.repeat(Math.round(pct / 2.5)) + '░'.repeat(40 - Math.round(pct / 2.5));

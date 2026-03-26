@@ -11,7 +11,10 @@ npm install
 # Preview text in console (no commits)
 node index.js --text "HELLO" --preview
 
-# Generate commits in current repo
+# AUTOMATED: init, commit, and push in one go!
+node index.js --text "PRANEETH" --remote https://github.com/YOU/REPO.git
+
+# Generate commits in current repo (manual push later)
 node index.js --text "HELLO"
 
 # Generate with darker green (more commits per pixel)
@@ -29,6 +32,8 @@ node index.js --text "HI" --export commits.sh
 
 ## Features
 
+- **Automated Push** — One command to init, commit, and push via `--remote`
+- **Windows .bat Support** — Download ready-to-use batch scripts for CMD
 - **5×7 Dot-Matrix Font** — A–Z, 0–9, space, and punctuation
 - **Console Preview** — See your text before committing
 - **Intensity Control** — 1 (light green) to 4 (dark green)
