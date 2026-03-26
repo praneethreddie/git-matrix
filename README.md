@@ -1,45 +1,46 @@
 # GitHub Contribution Graph Text Generator
 
-Convert text into GitHub contribution graph pixel art using backdated git commits.
+Convert any text into GitHub contribution graph pixel art using backdated git commits.
 
-## Quick Start
+## 🚀 How to Use (3 Simple Methods)
 
-```bash
-# Install dependencies
-npm install
+### Method 1: Automated CLI (Fastest for Developers)
+If you have **Node.js** installed, this is the easiest way. One command does everything:
+1. `npm install` (only once)
+2. Run this command:
+   ```bash
+   node index.js --text "HELLO" --year 2025 --remote https://github.com/YOU/REPO.git
+   ```
+   *This will initialize a repo, create all commits, and push them to your GitHub automatically.*
 
-# Preview text in console (no commits)
-node index.js --text "HELLO" --preview
+---
 
-# AUTOMATED: init, commit, and push in one go!
-node index.js --text "PRANEETH" --remote https://github.com/YOU/REPO.git
+### Method 2: Web UI + .bat (Easiest for Windows Users)
+No coding or CLI knowledge needed:
+1. Open [web/index.html](file:///d:/Downloads/git%20matrix/web/index.html) in your browser.
+2. Type your **Text** and (optional) **GitHub Repo URL**.
+3. Click **"Download .bat"**.
+4. Move the `.bat` file into a new empty folder and **double-click it**.
+   *It will prompt you for a URL if you didn't provide one, then handle the entire process.*
 
-# Generate commits in current repo (manual push later)
-node index.js --text "HELLO"
+---
 
-# Generate with darker green (more commits per pixel)
-node index.js --text "HI" --intensity 3
+### Method 3: Web UI + .sh (Linux / Mac / Git Bash)
+1. Open [web/index.html](file:///d:/Downloads/git%20matrix/web/index.html) in your browser.
+2. Enter your text and click **"Download .sh"**.
+3. Open your terminal in the target folder and run:
+   ```bash
+   bash git-matrix.sh
+   ```
 
-# Shift text position in timeline
-node index.js --text "HI" --offset 5
+## ✨ Features
 
-# Target a specific repo
-node index.js --text "HI" --repo ./my-repo
+- **Automated Push** — One command to init, commit, and push via `--remote`.
+- **Interactive .bat Support** — Windows scripts prompt for a Repo URL if missing.
+- **Year Selection** — Target any past year (e.g., 2024, 2025).
+- **Intensity Control** — Choose shades of green (1=light, 4=dark).
+- **5×7 Dot-Matrix Font** — A–Z, 0–9, space, and punctuation.
 
-# Export as shell script
-node index.js --text "HI" --export commits.sh
-```
-
-## Features
-
-- **Automated Push** — One command to init, commit, and push via `--remote`
-- **Interactive .bat Support** — Windows scripts will prompt for a Repo URL if not provided
-- **5×7 Dot-Matrix Font** — A–Z, 0–9, space, and punctuation
-- **Console Preview** — See your text before committing
-- **Intensity Control** — 1 (light green) to 4 (dark green)
-- **Week Offset** — Position text anywhere in the 52-week window
-- **Shell Script Export** — Download/run manually
-- **Web UI** — Open `web/index.html` for a live visual editor
 
 ## How It Works
 
